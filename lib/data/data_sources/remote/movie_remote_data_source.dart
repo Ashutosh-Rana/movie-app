@@ -14,9 +14,7 @@ abstract class MovieRemoteDataSource {
 @Injectable(as: MovieRemoteDataSource)
 class MovieRemoteDataSourceImpl implements MovieRemoteDataSource {
   final TMDBApiClient _apiClient;
-  final String _apiToken =
-      'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI4YTI0MzlkODhjNjUzMjE0NDZlZGI2YjBlNmQ4YThlOCIsIm5iZiI6MTc1MTY1MTc2NC40MTY5OTk4LCJzdWIiOiI2ODY4MTViNGJmOWE1Mjk0YTg1MWQyOWUiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.YsnRUF8WIDF9dlC5BUbNOLUhvfK1BTfQ6-YroOgJPcU';
-
+  final String _apiToken = String.fromEnvironment('TMDB_API_TOKEN');
   MovieRemoteDataSourceImpl(this._apiClient);
 
   @override
