@@ -3,6 +3,7 @@ import 'package:movies_app/presentation/routes/route_generator.dart';
 import 'package:movies_app/presentation/routes/routes.dart';
 import 'package:movies_app/utils/snackbar_utils.dart';
 
+import 'presentation/navigation/route_observer.dart';
 import 'presentation/themes/light_theme.dart';
 
 class MoviesApp extends StatelessWidget {
@@ -16,10 +17,11 @@ class MoviesApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       onGenerateRoute: (settings) => routeGenerator.generateRoute(settings),
       scaffoldMessengerKey: SnackbarUtils.scaffoldMessengerState,
-      initialRoute: Routes.home,
+      initialRoute: Routes.main,
       title: 'Movies App',
       themeMode: ThemeMode.light,
       theme: lightTheme,
+      navigatorObservers: [routeObserver],
     );
   }
 }
