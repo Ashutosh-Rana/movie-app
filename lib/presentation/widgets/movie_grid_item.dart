@@ -24,8 +24,9 @@ class MovieGridItem extends StatelessWidget {
       return _buildLoadingShimmer();
     }
 
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
       child: Card(
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

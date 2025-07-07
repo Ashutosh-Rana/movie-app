@@ -1,15 +1,14 @@
-import 'package:fpdart/fpdart.dart';
+import 'package:movies_app/core/typedefs.dart';
 
 import '../entities/movie.dart';
 import '../entities/movie_detail.dart';
-import '../local_storage_exception.dart';
 
 abstract class MovieRepository {
-  Future<Either<LocalStorageException, List<Movie>>> getTrendingMovies({int page = 1});
-  Future<Either<LocalStorageException, List<Movie>>> getNowPlayingMovies({int page = 1});
-  Future<Either<LocalStorageException, MovieDetail>> getMovieDetail(int id);
-  Future<Either<LocalStorageException, List<Movie>>> searchMovies(String query, {int page = 1});
-  Future<Either<LocalStorageException, List<Movie>>> getBookmarkedMovies();
-  Future<Either<LocalStorageException, bool>> toggleBookmark(Movie movie);
-  Future<Either<LocalStorageException, bool>> isMovieBookmarked(int id);
+  FutureEither<List<Movie>> getTrendingMovies({int page = 1});
+  FutureEither<List<Movie>> getNowPlayingMovies({int page = 1});
+  FutureEither<MovieDetail> getMovieDetail(int id);
+  FutureEither<List<Movie>> searchMovies(String query, {int page = 1});
+  FutureEither<List<Movie>> getBookmarkedMovies();
+  FutureEither<bool> toggleBookmark(Movie movie);
+  FutureEither<bool> isMovieBookmarked(int id);
 }

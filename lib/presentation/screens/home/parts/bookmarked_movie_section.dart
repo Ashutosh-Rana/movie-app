@@ -30,14 +30,11 @@ class _BookmarkedMovieSection extends StatelessWidget {
                 width: 150,
                 child: MovieGridItem(
                   movie: movie,
-                  // TODO: add arguments
                   onTap:
-                      () => Navigator.push(
+                      () => Navigator.pushNamed(
                         context,
-                        MaterialPageRoute(
-                          builder:
-                              (context) => MovieDetailScreen(movieId: movie.id),
-                        ),
+                        Routes.movieDetail,
+                        arguments: MovieDetailScreenArgs(movieId: movie.id),
                       ),
                 ),
               );

@@ -1,9 +1,8 @@
 import 'package:equatable/equatable.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:injectable/injectable.dart';
+import 'package:movies_app/core/typedefs.dart';
 
 import '../entities/movie_detail.dart';
-import '../local_storage_exception.dart';
 import '../repositories/movie_repository.dart';
 import 'usecase.dart';
 
@@ -14,7 +13,7 @@ class GetMovieDetailUseCase implements UseCase<MovieDetail, MovieParams> {
   GetMovieDetailUseCase(this._repository);
 
   @override
-  Future<Either<LocalStorageException, MovieDetail>> call(MovieParams params) {
+  FutureEither<MovieDetail> call(MovieParams params) {
     return _repository.getMovieDetail(params.id);
   }
 }

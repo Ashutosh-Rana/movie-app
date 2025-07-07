@@ -65,12 +65,12 @@ final class SearchLoadedState extends SearchState {
 }
 
 final class SearchErrorState extends SearchState {
-  final String message;
+  final AppError error;
 
-  const SearchErrorState({required this.message});
+  const SearchErrorState({required this.error});
 
   @override
-  List<Object> get props => [message];
+  List<Object> get props => [error];
 }
 
 final class SearchEmptyState extends SearchState {

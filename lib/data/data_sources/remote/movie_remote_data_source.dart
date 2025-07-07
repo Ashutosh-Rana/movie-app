@@ -1,4 +1,7 @@
+import 'dart:io' show Platform;
+
 import 'package:injectable/injectable.dart';
+import 'package:movies_app/logger.dart';
 
 import '../../models/movie_detail_model.dart';
 import '../../models/movie_model.dart';
@@ -14,7 +17,20 @@ abstract class MovieRemoteDataSource {
 @Injectable(as: MovieRemoteDataSource)
 class MovieRemoteDataSourceImpl implements MovieRemoteDataSource {
   final TMDBApiClient _apiClient;
-  final String _apiToken = String.fromEnvironment('TMDB_API_TOKEN');
+  String get _apiToken {
+    final token =
+        Platform.environment['TMDB_API_TOKEN'] ??
+        const String.fromEnvironment('TMDB_API_TOKEN');
+    if (token.isEmpty) {
+      logWarning(
+        'TMDB_API_TOKEN is empty! Please set it in your environment or launch.json',
+      );
+      return '';
+    }
+    // Ensure token has Bearer prefix if not already present
+    return token.startsWith('Bearer ') ? token : 'Bearer $token';
+  }
+
   MovieRemoteDataSourceImpl(this._apiClient);
 
   @override

@@ -34,6 +34,7 @@ import '../presentation/blocs/home/home_bloc.dart' as _i3;
 import '../presentation/blocs/movie_detail/movie_detail_bloc.dart' as _i621;
 import '../presentation/blocs/search/search_bloc.dart' as _i402;
 import '../presentation/routes/route_generator.dart' as _i228;
+import '../utils/deep_link_handler.dart' as _i182;
 
 extension GetItInjectableX on _i174.GetIt {
 // initializes the registration of main-scope dependencies inside of GetIt
@@ -54,6 +55,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i111.ApiCallWithException>(
         () => _i111.ApiCallWithException());
     gh.lazySingleton<_i424.DioProvider>(() => _i424.DioProvider());
+    gh.lazySingleton<_i182.DeepLinkHandler>(() => _i182.DeepLinkHandler());
     gh.lazySingleton<_i826.MoviesBlocObserver>(
         () => _i826.MoviesBlocObserver());
     gh.lazySingleton<_i772.CacheLocalDataSource>(
@@ -70,13 +72,14 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i727.TMDBApiClient>(() => _i727.TMDBApiClient(gh<_i361.Dio>()));
     gh.factory<_i789.MovieRemoteDataSource>(
         () => _i789.MovieRemoteDataSourceImpl(gh<_i727.TMDBApiClient>()));
-    gh.lazySingleton<_i424.ApiClient>(() => _i424.ApiClient(
-          gh<_i361.Dio>(),
-          baseUrl: gh<String>(),
-        ));
     gh.lazySingleton<_i897.MovieRepository>(() => _i992.MovieRepositoryImpl(
           gh<_i789.MovieRemoteDataSource>(),
           gh<_i70.MovieLocalDataSource>(),
+          gh<_i111.ApiCallWithException>(),
+        ));
+    gh.lazySingleton<_i424.ApiClient>(() => _i424.ApiClient(
+          gh<_i361.Dio>(),
+          baseUrl: gh<String>(),
         ));
     gh.factory<_i766.GetMovieDetailUseCase>(
         () => _i766.GetMovieDetailUseCase(gh<_i897.MovieRepository>()));

@@ -1,19 +1,18 @@
-import 'package:fpdart/fpdart.dart';
 import 'package:injectable/injectable.dart';
+import 'package:movies_app/core/typedefs.dart';
 
 import '../entities/movie.dart';
-import '../local_storage_exception.dart';
 import '../repositories/movie_repository.dart';
 import 'usecase.dart';
 
 @injectable
-class GetBookmarkedMoviesUseCase implements UseCase<List<Movie>, NoParams> {
+class GetBookmarkedMoviesUseCase implements UseCaseWithNoParams<List<Movie>> {
   final MovieRepository _repository;
 
   GetBookmarkedMoviesUseCase(this._repository);
 
   @override
-  Future<Either<LocalStorageException, List<Movie>>> call(NoParams params) {
+  FutureEither<List<Movie>> call() {
     return _repository.getBookmarkedMovies();
   }
 }
@@ -25,7 +24,7 @@ class ToggleBookmarkUseCase implements UseCase<bool, Movie> {
   ToggleBookmarkUseCase(this._repository);
 
   @override
-  Future<Either<LocalStorageException, bool>> call(Movie params) {
+  FutureEither<bool> call(Movie params) {
     return _repository.toggleBookmark(params);
   }
 }
@@ -37,7 +36,7 @@ class IsMovieBookmarkedUseCase implements UseCase<bool, int> {
   IsMovieBookmarkedUseCase(this._repository);
 
   @override
-  Future<Either<LocalStorageException, bool>> call(int params) {
+  FutureEither<bool> call(int params) {
     return _repository.isMovieBookmarked(params);
   }
 }

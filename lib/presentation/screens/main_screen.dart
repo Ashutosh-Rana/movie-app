@@ -42,9 +42,12 @@ class _MainScreenState extends State<MainScreen> {
             _currentIndex = index;
           });
 
-          // Load data when screen is switched
+          // Only load home data if we're switching to home tab AND current state is initial/error
           if (index == 0) {
-            context.read<HomeBloc>().add(LoadHomeDataEvent());
+            final homeState = context.read<HomeBloc>().state;
+            if (homeState is HomeInitialState || homeState is HomeErrorState) {
+              context.read<HomeBloc>().add(LoadHomeDataEvent());
+            }
           }
         },
         backgroundColor: Colors.blueGrey[900],

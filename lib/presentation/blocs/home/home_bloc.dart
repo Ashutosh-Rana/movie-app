@@ -1,12 +1,14 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import 'package:movies_app/core/enums.dart';
+import 'package:movies_app/domain/entities/app_error.dart';
+import 'package:movies_app/logger.dart';
 
 import '../../../domain/entities/movie.dart';
+import '../../../domain/usecases/bookmark_usecases.dart';
 import '../../../domain/usecases/get_now_playing_movies_usecase.dart';
 import '../../../domain/usecases/get_trending_movies_usecase.dart';
-import '../../../domain/usecases/bookmark_usecases.dart';
-import '../../../domain/usecases/usecase.dart';
 
 part 'home_event.dart';
 part 'home_state.dart';
@@ -18,9 +20,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final GetBookmarkedMoviesUseCase _getBookmarkedMoviesUseCase;
 
   HomeBloc(
-    this._getTrendingMoviesUseCase, 
+    this._getTrendingMoviesUseCase,
     this._getNowPlayingMoviesUseCase,
-    this._getBookmarkedMoviesUseCase
+    this._getBookmarkedMoviesUseCase,
   ) : super(HomeInitialState()) {
     on<LoadHomeDataEvent>(_onLoadHomeData);
     on<RefreshHomeDataEvent>(_onRefreshHomeData);
@@ -28,7 +30,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<LoadMoreTrendingMoviesEvent>(_onLoadMoreTrendingMovies);
     on<LoadBookmarkedMoviesEvent>(_onLoadBookmarkedMovies);
   }
-  
+
   Future<void> _onLoadBookmarkedMovies(
     LoadBookmarkedMoviesEvent event,
     Emitter<HomeState> emit,
@@ -37,22 +39,24 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     if (currentState is HomeLoadedState) {
       try {
         // Get bookmarked movies
-        final result = await _getBookmarkedMoviesUseCase(NoParams());
-        
+        final result = await _getBookmarkedMoviesUseCase();
+
         if (result.isLeft()) {
           final failure = result.fold((l) => l, (r) => null);
           // Just log the error, don't change state to error
-          print('Failed to load bookmarked movies: ${failure?.message}');
+          logError('Failed to load bookmarked movies: ${failure?.error}');
           return;
         }
-        
+
         // Extract bookmarked movies
         final bookmarkedMovies = result.fold((l) => <Movie>[], (r) => r);
-        
+
         // Update state with bookmarked movies
         emit(currentState.copyWith(bookmarkedMovies: bookmarkedMovies));
       } catch (e) {
-        print('An unexpected error occurred while loading bookmarked movies: $e');
+        print(
+          'An unexpected error occurred while loading bookmarked movies: $e',
+        );
       }
     }
   }
@@ -72,11 +76,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       // Handle failure case for trending movies
       if (trendingResult.isLeft()) {
         final failure = trendingResult.fold((failure) => failure, (r) => null);
-        emit(
-          HomeErrorState(
-            message: 'Failed to load trending movies: ${failure?.message}',
-          ),
-        );
+        emit(HomeErrorState(error: failure ?? _unknownError()));
         return;
       }
 
@@ -91,20 +91,22 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       // Handle failure case for now playing movies
       if (nowPlayingResult.isLeft()) {
         final failure = nowPlayingResult.fold((l) => l, (r) => null);
-        emit(
-          HomeErrorState(
-            message: 'Failed to load now playing movies: ${failure?.message}',
-          ),
-        );
+        emit(HomeErrorState(error: failure ?? _unknownError()));
         return;
       }
 
       // Extract now playing movies
-      final nowPlayingMovies = nowPlayingResult.fold((l) => <Movie>[], (r) => r);
+      final nowPlayingMovies = nowPlayingResult.fold(
+        (l) => <Movie>[],
+        (r) => r,
+      );
 
       // Get bookmarked movies
-      final bookmarkedResult = await _getBookmarkedMoviesUseCase(NoParams());
-      final bookmarkedMovies = bookmarkedResult.fold((l) => <Movie>[], (r) => r);
+      final bookmarkedResult = await _getBookmarkedMoviesUseCase();
+      final bookmarkedMovies = bookmarkedResult.fold(
+        (l) => <Movie>[],
+        (r) => r,
+      );
 
       // Create loaded state
       emit(
@@ -119,7 +121,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         ),
       );
     } catch (e) {
-      emit(HomeErrorState(message: 'An unexpected error occurred: $e'));
+      emit(HomeErrorState(error: _unknownError()));
     }
   }
 
@@ -135,13 +137,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
       // Handle failure case for trending movies
       if (trendingResult.isLeft()) {
-        final failure = trendingResult.fold(
-          (l) => l,
-          (r) => null,
-        );
-        emit(
-          HomeErrorState(message: 'Failed to refresh: ${failure?.message}'),
-        );
+        final failure = trendingResult.fold((l) => l, (r) => null);
+        emit(HomeErrorState(error: failure ?? _unknownError()));
         return;
       }
 
@@ -155,19 +152,17 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
       // Handle failure case for now playing movies
       if (nowPlayingResult.isLeft()) {
-        final failure = nowPlayingResult.fold(
-          (l) => l,
-          (r) => null,
-        );
-        emit(
-          HomeErrorState(message: 'Failed to refresh: ${failure?.message}'),
-        );
+        final failure = nowPlayingResult.fold((l) => l, (r) => null);
+        emit(HomeErrorState(error: failure ?? _unknownError()));
         return;
       }
 
       // Get bookmarked movies
-      final bookmarkedResult = await _getBookmarkedMoviesUseCase(NoParams());
-      final bookmarkedMovies = bookmarkedResult.fold((l) => <Movie>[], (r) => r);
+      final bookmarkedResult = await _getBookmarkedMoviesUseCase();
+      final bookmarkedMovies = bookmarkedResult.fold(
+        (l) => <Movie>[],
+        (r) => r,
+      );
 
       // Extract now playing movies and emit success state
       final nowPlayingMovies = nowPlayingResult.fold(
@@ -188,11 +183,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         ),
       );
     } catch (e) {
-      emit(
-        HomeErrorState(
-          message: 'An unexpected error occurred during refresh: $e',
-        ),
-      );
+      emit(HomeErrorState(error: _unknownError()));
     }
   }
 
@@ -221,7 +212,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
               currentState.copyWith(
                 isLoadingMoreNowPlaying: false,
                 loadMoreError:
-                    'Failed to load more now playing movies: ${failure?.message}',
+                    'Failed to load more now playing movies: ${failure?.error}',
               ),
             );
           }
@@ -246,8 +237,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
             final hasReachedEnd = newMovies.length < 20;
 
             // Append new movies to existing list
-            final updatedMovies = List<Movie>.from(currentState.nowPlayingMovies)
-              ..addAll(newMovies);
+            final updatedMovies = List<Movie>.from(
+              currentState.nowPlayingMovies,
+            )..addAll(newMovies);
 
             // Update state with new data
             emit(
@@ -299,7 +291,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
               currentState.copyWith(
                 isLoadingMoreTrending: false,
                 loadMoreError:
-                    'Failed to load more trending movies: ${failure?.message}',
+                    'Failed to load more trending movies: ${failure?.error}',
               ),
             );
           }
@@ -350,5 +342,12 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         }
       }
     }
+  }
+
+  AppError _unknownError() {
+    return AppError(
+      type: AppErrorType.unknown,
+      error: 'An unexpected error occurred',
+    );
   }
 }

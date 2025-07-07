@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import 'package:movies_app/core/enums.dart';
+import 'package:movies_app/domain/entities/app_error.dart';
 
 import '../../../domain/entities/movie_detail.dart';
 import '../../../domain/usecases/bookmark_usecases.dart';
@@ -32,13 +34,12 @@ class MovieDetailBloc extends Bloc<MovieDetailEvent, MovieDetailState> {
       emit(const MovieDetailLoadingState());
 
       final result = await _getMovieDetailUseCase(MovieParams(event.movieId));
-
       // Handle failure case for movie details
       if (result.isLeft()) {
         final failure = result.fold((l) => l, (r) => null);
         emit(
           MovieDetailErrorState(
-            message: 'Failed to load movie details: ${failure?.message}',
+            error: failure ?? AppError(type: AppErrorType.unknown),
           ),
         );
         return;
@@ -48,9 +49,7 @@ class MovieDetailBloc extends Bloc<MovieDetailEvent, MovieDetailState> {
       final movieDetail = result.fold((l) => null, (r) => r);
       if (movieDetail == null) {
         emit(
-          const MovieDetailErrorState(
-            message: 'Movie details could not be loaded',
-          ),
+          MovieDetailErrorState(error: AppError(type: AppErrorType.unknown)),
         );
         return;
       }
@@ -77,9 +76,7 @@ class MovieDetailBloc extends Bloc<MovieDetailEvent, MovieDetailState> {
       }
     } catch (e) {
       if (!emit.isDone) {
-        emit(
-          MovieDetailErrorState(message: 'An unexpected error occurred: $e'),
-        );
+        emit(MovieDetailErrorState(error: _unknownError()));
       }
     }
   }
@@ -104,11 +101,7 @@ class MovieDetailBloc extends Bloc<MovieDetailEvent, MovieDetailState> {
         if (result.isLeft()) {
           // Handle failure case
           final failure = result.fold((l) => l, (r) => null);
-          emit(
-            MovieDetailErrorState(
-              message: 'Failed to update bookmark: ${failure?.message}',
-            ),
-          );
+          emit(MovieDetailErrorState(error: failure ?? _unknownError()));
         } else {
           // Extract the bookmarked status
           final isBookmarked = result.fold((l) => false, (r) => r);
@@ -118,14 +111,16 @@ class MovieDetailBloc extends Bloc<MovieDetailEvent, MovieDetailState> {
         }
       } catch (e) {
         if (!emit.isDone) {
-          emit(
-            MovieDetailErrorState(
-              message:
-                  'An unexpected error occurred while toggling bookmark: $e',
-            ),
-          );
+          emit(MovieDetailErrorState(error: _unknownError()));
         }
       }
     }
+  }
+
+  AppError _unknownError() {
+    return AppError(
+      type: AppErrorType.unknown,
+      error: 'An unexpected error occurred',
+    );
   }
 }

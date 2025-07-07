@@ -1,10 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../core/constants/app_constants.dart';
-import '../../../di/get_it.dart';
 import '../../../domain/entities/movie_detail.dart';
+import '../../../utils/deep_link_handler.dart';
 import '../../blocs/movie_detail/movie_detail_bloc.dart';
 import '../../widgets/movie_loading_indicator.dart';
 
@@ -15,29 +16,25 @@ class MovieDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: refactor bloc provider
-    return BlocProvider(
-      create:
-          (_) =>
-              getIt<MovieDetailBloc>()
-                ..add(LoadMovieDetailEvent(movieId: movieId)),
-      child: Scaffold(
-        body: BlocBuilder<MovieDetailBloc, MovieDetailState>(
-          builder: (context, state) {
-            if (state is MovieDetailLoadingState) {
-              return const Center(child: MovieLoadingIndicator());
-            } else if (state is MovieDetailLoadedState) {
-              return _buildMovieDetail(
-                context,
-                state.movieDetail,
-                state.isBookmarked,
-              );
-            } else if (state is MovieDetailErrorState) {
-              return _buildErrorView(context, state.message);
-            }
-            return const SizedBox.shrink();
-          },
-        ),
+    return Scaffold(
+      body: BlocBuilder<MovieDetailBloc, MovieDetailState>(
+        builder: (context, state) {
+          if (state is MovieDetailLoadingState) {
+            return const Center(child: MovieLoadingIndicator());
+          } else if (state is MovieDetailLoadedState) {
+            return _buildMovieDetail(
+              context,
+              state.movieDetail,
+              state.isBookmarked,
+            );
+          } else if (state is MovieDetailErrorState) {
+            return _buildErrorView(
+              context,
+              state.error.error ?? 'Something went wrong',
+            );
+          }
+          return const SizedBox.shrink();
+        },
       ),
     );
   }
@@ -103,6 +100,15 @@ class MovieDetailScreen extends StatelessWidget {
             ),
           ),
           actions: [
+            // Share button
+            IconButton(
+              iconSize: 24,
+              icon: const Icon(Icons.share, color: Colors.black),
+              onPressed: () {
+                _shareMovie(context, movie);
+              },
+            ),
+            const SizedBox(width: 8),
             IconButton(
               iconSize: 24,
               icon: Icon(
@@ -115,7 +121,7 @@ class MovieDetailScreen extends StatelessWidget {
                 );
               },
             ),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
           ],
         ),
         SliverToBoxAdapter(
@@ -234,26 +240,29 @@ class MovieDetailScreen extends StatelessWidget {
 
   Widget _buildErrorView(BuildContext context, String message) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.error_outline, size: 60, color: Colors.red),
-          const SizedBox(height: 16),
-          Text(
-            'Error: $message',
-            style: const TextStyle(fontSize: 16),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () {
-              context.read<MovieDetailBloc>().add(
-                LoadMovieDetailEvent(movieId: movieId),
-              );
-            },
-            child: const Text('Retry'),
-          ),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 60, color: Colors.red),
+            const SizedBox(height: 16),
+            Text(
+              'Error: $message',
+              style: const TextStyle(fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                context.read<MovieDetailBloc>().add(
+                  LoadMovieDetailEvent(movieId: movieId),
+                );
+              },
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -270,5 +279,48 @@ class MovieDetailScreen extends StatelessWidget {
     } else {
       return amount.toString();
     }
+  }
+
+  /// Shares a movie using a deep link
+  void _shareMovie(BuildContext context, MovieDetail movie) {
+    // Create a deep link for the movie
+    final deepLink = DeepLinkHandler.createMovieDeepLink(movie.id);
+
+    // Create a secondary web URL (in a real app, this would be your website URL)
+    // For demonstration, we're creating a fake web URL that would redirect to the app
+    final webUrl = 'https://moviesapp.example.com/movie/${movie.id}';
+
+    // Create a message that includes both URLs - the web URL will be clickable in most apps
+    final message =
+        'Check out this movie: ${movie.title}\n\n'
+        'Open in app: $deepLink\n\n'
+        'Or click here: $webUrl';
+
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    SharePlus.instance
+        .share(
+          ShareParams(
+            text: message,
+            subject: 'Movie Recommendation: ${movie.title}',
+          ),
+        )
+        .then((_) {
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(
+              content: Text('Link shared successfully!'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        })
+        .catchError((error) {
+          scaffoldMessenger.showSnackBar(
+            SnackBar(
+              content: Text('Failed to share: ${error.toString()}'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        });
   }
 }

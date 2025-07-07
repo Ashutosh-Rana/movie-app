@@ -47,13 +47,10 @@ class _NowPlayingMovieSection extends StatelessWidget {
             return MovieGridItem(
               movie: movie,
               onTap:
-                  // TODO: add arguments
-                  () => Navigator.push(
+                  () => Navigator.pushNamed(
                     context,
-                    MaterialPageRoute(
-                      builder:
-                          (context) => MovieDetailScreen(movieId: movie.id),
-                    ),
+                    Routes.movieDetail,
+                    arguments: MovieDetailScreenArgs(movieId: movie.id),
                   ),
             );
           },

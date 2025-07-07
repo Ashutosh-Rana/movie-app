@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:movies_app/presentation/routes/route_arguments.dart';
+import 'package:movies_app/presentation/routes/routes.dart';
 
-import '../../../core/constants/app_constants.dart';
 import '../../../domain/entities/movie.dart';
 import '../../blocs/home/home_bloc.dart';
 import '../../navigation/route_observer.dart';
 import '../../widgets/movie_grid_item.dart';
 import '../../widgets/movie_loading_indicator.dart';
-import '../movie_detail/movie_detail_screen.dart';
 
 part 'parts/bookmarked_movie_section.dart';
 part 'parts/now_playing_movie_section.dart';
@@ -31,10 +31,11 @@ class _HomeScreenState extends State<HomeScreen>
     _nowPlayingScrollController.addListener(_onNowPlayingScroll);
     _trendingScrollController.addListener(_onTrendingScroll);
     WidgetsBinding.instance.addObserver(this);
+    final homeBloc = context.read<HomeBloc>();
 
     // Load home data if not already loaded
     Future.microtask(() {
-      context.read<HomeBloc>().add(LoadHomeDataEvent());
+      homeBloc.add(LoadHomeDataEvent());
     });
   }
 
@@ -115,7 +116,10 @@ class _HomeScreenState extends State<HomeScreen>
             } else if (state is HomeLoadedState) {
               return _buildHomeContent(state);
             } else if (state is HomeErrorState) {
-              return _buildErrorView(context, state.message);
+              return _buildErrorView(
+                context,
+                state.error.error ?? 'Unknown error',
+              );
             }
             return const SizedBox.shrink();
           },

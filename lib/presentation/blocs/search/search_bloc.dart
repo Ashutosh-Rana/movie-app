@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import 'package:movies_app/core/enums.dart';
+import 'package:movies_app/domain/entities/app_error.dart';
 
 import '../../../domain/entities/movie.dart';
 import '../../../domain/usecases/search_movies_usecase.dart';
@@ -71,7 +73,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
             final failure = result.fold((l) => l, (r) => null);
             emit(
               SearchErrorState(
-                message: failure?.message ?? 'Something went wrong',
+                error: failure ?? AppError(type: AppErrorType.unknown),
               ),
             );
           } else {
@@ -97,7 +99,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
           }
         } catch (e) {
           if (!emit.isDone && !currentCompleter!.isCompleted) {
-            emit(SearchErrorState(message: 'Search error: $e'));
+            emit(SearchErrorState(error: _unknownError()));
             currentCompleter.complete();
           }
         }
@@ -107,7 +109,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
       await currentCompleter!.future;
     } catch (e) {
       if (!emit.isDone) {
-        emit(SearchErrorState(message: 'Unexpected error: $e'));
+        emit(SearchErrorState(error: _unknownError()));
       }
     }
   }
@@ -138,7 +140,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
           emit(
             currentState.copyWith(
               isLoadingMore: false,
-              loadMoreError: failure?.message,
+              loadMoreError: failure?.error,
             ),
           );
           return;
@@ -186,5 +188,12 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
   Future<void> close() {
     _debounceTimer?.cancel();
     return super.close();
+  }
+
+  AppError _unknownError() {
+    return AppError(
+      type: AppErrorType.unknown,
+      error: 'An unexpected error occurred',
+    );
   }
 }

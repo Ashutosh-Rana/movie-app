@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:movies_app/presentation/routes/route_arguments.dart';
+import 'package:movies_app/presentation/routes/routes.dart';
 
 import '../../../domain/entities/movie.dart';
 import '../../blocs/search/search_bloc.dart';
 import '../../widgets/movie_grid_item.dart';
 import '../../widgets/movie_loading_indicator.dart';
-import '../movie_detail/movie_detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -78,6 +79,9 @@ class _SearchScreenState extends State<SearchScreen>
               child: TextField(
                 controller: _searchController,
                 textInputAction: TextInputAction.done,
+                onTapOutside: (PointerDownEvent event) {
+                  FocusManager.instance.primaryFocus?.unfocus();
+                },
                 decoration: InputDecoration(
                   hintText: 'Search for movies...',
                   prefixIcon: const Icon(Icons.search),
@@ -149,7 +153,7 @@ class _SearchScreenState extends State<SearchScreen>
             const Icon(Icons.error_outline, size: 50, color: Colors.red),
             const SizedBox(height: 16),
             Text(
-              'Error: ${state.message}',
+              'Error: ${state.error.error}',
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),
             const SizedBox(height: 16),
@@ -193,14 +197,13 @@ class _SearchScreenState extends State<SearchScreen>
         final movie = movies[index];
         return MovieGridItem(
           movie: movie,
-          // TODO: add arguments
-          onTap:
-              () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => MovieDetailScreen(movieId: movie.id),
-                ),
-              ),
+          onTap: () {
+            Navigator.pushNamed(
+              context,
+              Routes.movieDetail,
+              arguments: MovieDetailScreenArgs(movieId: movie.id),
+            );
+          },
         );
       },
     );

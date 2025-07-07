@@ -1,13 +1,9 @@
-import 'package:equatable/equatable.dart';
-import 'package:fpdart/fpdart.dart';
-
-import '../local_storage_exception.dart';
+import 'package:movies_app/core/typedefs.dart';
 
 abstract class UseCase<Type, Params> {
-  Future<Either<LocalStorageException, Type>> call(Params params);
+  FutureEither<Type> call(Params params);
 }
 
-class NoParams extends Equatable {
-  @override
-  List<Object?> get props => [];
+abstract class UseCaseWithNoParams<Type> {
+  FutureEither<Type> call();
 }

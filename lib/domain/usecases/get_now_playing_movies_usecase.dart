@@ -1,9 +1,8 @@
 import 'package:equatable/equatable.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:injectable/injectable.dart';
+import 'package:movies_app/core/typedefs.dart';
 
 import '../entities/movie.dart';
-import '../local_storage_exception.dart';
 import '../repositories/movie_repository.dart';
 import 'usecase.dart';
 
@@ -14,7 +13,7 @@ class GetNowPlayingMoviesUseCase implements UseCase<List<Movie>, PageParams> {
   GetNowPlayingMoviesUseCase(this._repository);
 
   @override
-  Future<Either<LocalStorageException, List<Movie>>> call(PageParams params) {
+  FutureEither<List<Movie>> call(PageParams params) {
     return _repository.getNowPlayingMovies(page: params.page);
   }
 }
