@@ -3,9 +3,9 @@ import 'dart:io' show Platform;
 import 'package:injectable/injectable.dart';
 import 'package:movies_app/logger.dart';
 
+import '../../../core/api/tmdb_api_client.dart';
 import '../../models/movie_detail_model.dart';
 import '../../models/movie_model.dart';
-import 'tmdb_api_client.dart';
 
 abstract class MovieRemoteDataSource {
   Future<MovieResponse> getTrendingMovies({int page = 1});

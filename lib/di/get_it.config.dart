@@ -16,12 +16,11 @@ import 'package:injectable/injectable.dart' as _i526;
 import 'package:isar/isar.dart' as _i338;
 
 import '../core/api/api_call_with_exception.dart' as _i111;
-import '../core/api/api_client.dart' as _i424;
+import '../core/api/tmdb_api_client.dart' as _i833;
 import '../core/injection_module.dart' as _i237;
 import '../data/data_sources/local/cache_local_data_source.dart' as _i772;
 import '../data/data_sources/local/movie_local_data_source.dart' as _i70;
 import '../data/data_sources/remote/movie_remote_data_source.dart' as _i789;
-import '../data/data_sources/remote/tmdb_api_client.dart' as _i727;
 import '../data/repositories/movie_repository_impl.dart' as _i992;
 import '../domain/repositories/movie_repository.dart' as _i897;
 import '../domain/usecases/bookmark_usecases.dart' as _i329;
@@ -54,7 +53,6 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i111.ApiCallWithException>(
         () => _i111.ApiCallWithException());
-    gh.lazySingleton<_i424.DioProvider>(() => _i424.DioProvider());
     gh.lazySingleton<_i182.DeepLinkHandler>(() => _i182.DeepLinkHandler());
     gh.lazySingleton<_i826.MoviesBlocObserver>(
         () => _i826.MoviesBlocObserver());
@@ -69,17 +67,13 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i228.RouteGenerator>(() => _i228.RouteGeneratorImpl());
     gh.lazySingleton<_i361.Dio>(
         () => registerModule.dio(gh<String>(instanceName: 'BaseUrl')));
-    gh.factory<_i727.TMDBApiClient>(() => _i727.TMDBApiClient(gh<_i361.Dio>()));
+    gh.factory<_i833.TMDBApiClient>(() => _i833.TMDBApiClient(gh<_i361.Dio>()));
     gh.factory<_i789.MovieRemoteDataSource>(
-        () => _i789.MovieRemoteDataSourceImpl(gh<_i727.TMDBApiClient>()));
+        () => _i789.MovieRemoteDataSourceImpl(gh<_i833.TMDBApiClient>()));
     gh.lazySingleton<_i897.MovieRepository>(() => _i992.MovieRepositoryImpl(
           gh<_i789.MovieRemoteDataSource>(),
           gh<_i70.MovieLocalDataSource>(),
           gh<_i111.ApiCallWithException>(),
-        ));
-    gh.lazySingleton<_i424.ApiClient>(() => _i424.ApiClient(
-          gh<_i361.Dio>(),
-          baseUrl: gh<String>(),
         ));
     gh.factory<_i766.GetMovieDetailUseCase>(
         () => _i766.GetMovieDetailUseCase(gh<_i897.MovieRepository>()));

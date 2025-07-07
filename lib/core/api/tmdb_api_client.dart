@@ -2,8 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import 'package:retrofit/retrofit.dart';
 
-import '../../models/movie_detail_model.dart';
-import '../../models/movie_model.dart';
+import '../../data/models/movie_detail_model.dart';
+import '../../data/models/movie_model.dart';
 
 part 'tmdb_api_client.g.dart';
 

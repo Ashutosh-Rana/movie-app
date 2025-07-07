@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:injectable/injectable.dart';
 import 'package:movies_app/core/enums.dart';
@@ -15,10 +17,30 @@ class ApiCallWithException {
   ApiCallWithException();
 
   int? initialRetryCount;
+  final Connectivity _connectivity = Connectivity();
+
+  // Check if there is an internet connection
+  Future<bool> _hasInternetConnection() async {
+    final result = await _connectivity.checkConnectivity();
+    // Since checkConnectivity returns List<ConnectivityResult>, check if the list contains any
+    // connectivity result other than 'none' (meaning we have some connectivity)
+    return result.isNotEmpty && !result.contains(ConnectivityResult.none);
+  }
 
   FutureEither<T> call<T>(Future<T> Function() f, {int retryCount = 0}) async {
     try {
       initialRetryCount ??= retryCount;
+
+      // Check for internet connection before making the call
+      final hasInternet = await _hasInternetConnection();
+      if (!hasInternet) {
+        return Left(
+          const AppError(
+            type: AppErrorType.network,
+            error: 'No internet connection',
+          ),
+        );
+      }
 
       final result = await f();
 
@@ -31,6 +53,29 @@ class ApiCallWithException {
         retryCount: retryCount,
         errorType: AppErrorType.network,
         errorMessage: 'No internet connection',
+      );
+    } on DioException catch (e, s) {
+      // Handle Dio specific network errors
+      if (e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.connectionTimeout ||
+          e.error is SocketException) {
+        return _handleException(
+          e: e,
+          stackTrace: s,
+          f: f,
+          retryCount: retryCount,
+          errorType: AppErrorType.network,
+          errorMessage: 'No internet connection',
+        );
+      }
+      return _handleException(
+        e: e,
+        stackTrace: s,
+        f: f,
+        retryCount: retryCount,
+        errorType: AppErrorType.api,
+        errorMessage: 'API error: ${e.message ?? 'Unknown error'}',
+        data: e.response?.data,
       );
     } on TimeoutException catch (e, s) {
       return _handleException(
@@ -133,8 +178,25 @@ class ApiCallWithException {
     // Logging
     logError('ApiCallWithException: ${e.toString()}', e);
 
-    // Retry
-    if (retryCount > 0) {
+    // Special handling for network errors
+    if (errorType == AppErrorType.network) {
+      // For network errors, always try at least once more with a delay
+      // This helps when internet connection was recently restored
+      if (initialRetryCount! >= retryCount) {
+        try {
+          // Add a short delay to allow network to stabilize if it was just reconnected
+          await Future.delayed(const Duration(milliseconds: 500));
+          final result = await f();
+          return Right(result);
+        } catch (_) {
+          // If still failing, continue with normal retry logic
+          if (retryCount > 0) {
+            return call(f, retryCount: retryCount - 1);
+          }
+        }
+      }
+    } else if (retryCount > 0) {
+      // Normal retry for non-network errors
       return call(f, retryCount: retryCount - 1);
     }
 
